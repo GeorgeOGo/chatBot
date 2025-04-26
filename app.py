@@ -14,9 +14,6 @@ load_dotenv()
 app = Flask(__name__, static_folder='static', template_folder='static')
 CORS(app)
 
-# Set Groq API Key directly (for testing)
-#os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
-
 def load_docx(filepath):
     """Extracts text from a Word document."""
     doc = Document(filepath)
