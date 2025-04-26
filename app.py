@@ -15,8 +15,7 @@ app = Flask(__name__, static_folder='static', template_folder='static')
 CORS(app)
 
 # Set Groq API Key directly (for testing)
-os.environ["GROQ_API_KEY"] = "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"
-#os.getenv("GROQ_API_KEY")
+#os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY")
 
 def load_docx(filepath):
     """Extracts text from a Word document."""
@@ -107,7 +106,7 @@ def ask_question():
     data = request.get_json()
     user_query = data.get("question")
     history = data.get("history", [])  # Get conversation history
-    doc_path = data.get("doc_path", r"C:\Users\George\Downloads\ai based\YouLearnt Ai chat robot.docx")
+    doc_path = data.get("doc_path", r"YouLearnt Ai chat robot.docx")
     
     if not user_query:
         return jsonify({"error": "No question provided"}), 400
@@ -116,4 +115,4 @@ def ask_question():
     return jsonify(result)
 
 if __name__ == "__main__":
-    app.run(debug=True, host="127.0.0.1", port=5000)
+    app.run(debug=False, host="0.0.0.0", port=5000)
