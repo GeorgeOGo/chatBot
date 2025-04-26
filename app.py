@@ -1,12 +1,9 @@
 from flask import Flask, render_template, request, jsonify
 import os
 import json
-import faiss
 import langdetect
 from langchain.chat_models import init_chat_model
-from sentence_transformers import SentenceTransformer
 from docx import Document
-import numpy as np
 from flask_cors import CORS
 from dotenv import dotenv_values, load_dotenv
 import logging
@@ -18,51 +15,19 @@ load_dotenv()
 app = Flask(__name__, static_folder='static', template_folder='static')
 CORS(app)
 
-# Use a smaller model to reduce memory usage
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
-
 def load_docx(filepath):
     """Extracts text from a Word document with a size limit."""
     try:
         doc = Document(filepath)
         text = "\n".join([para.text for para in doc.paragraphs if para.text.strip()])
-        # Limit text size to reduce memory usage (e.g., first 10,000 characters)
-        if len(text) > 10000:
-            logger.warning("Document too large, truncating to 10,000 characters.")
-            text = text[:10000]
+        # Limit text size to reduce memory usage (e.g., first 5,000 characters)
+        if len(text) > 5000:
+            logger.warning("Document too large, truncating to 5,000 characters.")
+            text = text[:5000]
         return text
     except Exception as e:
         logger.error(f"Error loading document: {str(e)}")
         return f"Error loading document: {str(e)}"
-
-def chunk_text(text, chunk_size=256):  # Reduced chunk size
-    """Splits text into smaller chunks."""
-    words = text.split()
-    return [" ".join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
-
-def create_faiss_index(text_chunks, embedding_model):
-    """Creates a FAISS index from text chunks."""
-    # Limit the number of chunks to reduce memory usage
-    if len(text_chunks) > 50:
-        logger.warning("Too many chunks, limiting to 50.")
-        text_chunks = text_chunks[:50]
-    
-    embeddings = embedding_model.encode(text_chunks, convert_to_numpy=True)
-    dimension = embeddings.shape[1]
-    index = faiss.IndexFlatL2(dimension)
-    index.add(embeddings)
-    return index, text_chunks
-
-def retrieve_top_k(query, index, text_chunks, embedding_model, k=3):
-    """Retrieves top-k relevant chunks using FAISS."""
-    query_embedding = embedding_model.encode([query], convert_to_numpy=True)
-    distances, indices = index.search(query_embedding, k)
-    retrieved_texts = [text_chunks[i] for i in indices[0] if i < len(text_chunks)]
-    
-    if not retrieved_texts:
-        return "لم أتمكن من العثور على إجابة لسؤالك، يمكنك التواصل مع فريق الدعم عبر support@youlearnt.com ."
-    
-    return " ".join(retrieved_texts)
 
 def generate_response(model, query, context, history, language):
     """Generates a response using Llama 3-8B via Groq in the appropriate language."""
@@ -92,12 +57,10 @@ def process_query(doc_path, user_query, history):
     lang_map = {'ar': 'Arabic', 'en': 'English'}
     language = lang_map.get(language, 'English')
     
-    text = load_docx(doc_path)
-    text_chunks = chunk_text(text)
+    # Load document text directly as context
+    context = load_docx(doc_path)
     
-    index, text_chunks = create_faiss_index(text_chunks, embedding_model)
-    context = retrieve_top_k(user_query, index, text_chunks, embedding_model)
-    
+    # Load Llama 3-8B via Groq
     llama_model = init_chat_model("llama3-8b-8192", model_provider="groq")
     response = generate_response(llama_model, user_query, context, history, language)
     
