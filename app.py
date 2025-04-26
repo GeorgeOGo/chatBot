@@ -12,7 +12,7 @@ from dotenv import dotenv_values, load_dotenv
 
 load_dotenv()
 app = Flask(__name__, static_folder='static', template_folder='static')
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]}})
 
 def load_docx(filepath):
     """Extracts text from a Word document."""
