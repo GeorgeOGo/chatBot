@@ -18,25 +18,35 @@ load_dotenv()
 app = Flask(__name__, static_folder='static', template_folder='static')
 CORS(app)
 
-# Load the embedding model once to save memory
-embedding_model = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+# Use a smaller model to reduce memory usage
+embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 
 def load_docx(filepath):
-    """Extracts text from a Word document."""
+    """Extracts text from a Word document with a size limit."""
     try:
         doc = Document(filepath)
-        return "\n".join([para.text for para in doc.paragraphs if para.text.strip()])
+        text = "\n".join([para.text for para in doc.paragraphs if para.text.strip()])
+        # Limit text size to reduce memory usage (e.g., first 10,000 characters)
+        if len(text) > 10000:
+            logger.warning("Document too large, truncating to 10,000 characters.")
+            text = text[:10000]
+        return text
     except Exception as e:
         logger.error(f"Error loading document: {str(e)}")
         return f"Error loading document: {str(e)}"
 
-def chunk_text(text, chunk_size=512):
+def chunk_text(text, chunk_size=256):  # Reduced chunk size
     """Splits text into smaller chunks."""
     words = text.split()
     return [" ".join(words[i:i+chunk_size]) for i in range(0, len(words), chunk_size)]
 
 def create_faiss_index(text_chunks, embedding_model):
     """Creates a FAISS index from text chunks."""
+    # Limit the number of chunks to reduce memory usage
+    if len(text_chunks) > 50:
+        logger.warning("Too many chunks, limiting to 50.")
+        text_chunks = text_chunks[:50]
+    
     embeddings = embedding_model.encode(text_chunks, convert_to_numpy=True)
     dimension = embeddings.shape[1]
     index = faiss.IndexFlatL2(dimension)
