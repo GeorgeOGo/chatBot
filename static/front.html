@@ -123,7 +123,6 @@
             font-size: 24px;
             margin: 0 0 20px;
         }
-        /* Dark mode styles */
         .dark-mode {
             background-color: #1c2526;
             color: #e0e0e0;
@@ -147,7 +146,6 @@
         .dark-mode h1 {
             color: #e0e0e0;
         }
-        /* Toggle buttons */
         #darkModeToggle, #langToggle {
             position: fixed;
             top: 20px;
@@ -177,7 +175,6 @@
         #langToggle:hover {
             background-color: #27ae60;
         }
-        /* English styles */
         [lang="en"] {
             direction: ltr;
             text-align: left;
@@ -188,7 +185,6 @@
         [lang="en"] .bot-message {
             text-align: left;
         }
-        /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -197,7 +193,6 @@
             from { transform: translateY(0); }
             to { transform: translateY(-4px); }
         }
-        /* Responsive design */
         @media (max-width: 600px) {
             .container {
                 margin: 10px;
@@ -326,7 +321,7 @@
             showTypingIndicator();
 
             try {
-                const response = await fetch('http://127.0.0.1:5000/api/ask', {
+                const response = await fetch('/api/ask', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
